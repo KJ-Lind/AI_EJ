@@ -3,7 +3,7 @@ import random
 
 # Window
 Window = tk.Tk()
-window.bgcolor("grey")
+Window.bgcolor("grey")
 Window.title("Cadenas Markov")
 Window.geometry("900x800")
 
