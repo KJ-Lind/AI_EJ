@@ -11,7 +11,7 @@ t.speed(0)
 t.color("cyan")
 t.hideturtle()
 t.penup()
-t.goto(-300, 0)
+t.goto(-300, 200)
 t.pendown()
 
 
