@@ -3,6 +3,7 @@ import random
 
 # Window
 Window = tk.Tk()
+window.bgcolor("grey")
 Window.title("Cadenas Markov")
 Window.geometry("900x800")
 
@@ -43,12 +44,12 @@ slider_B = tk.Scale(
 )
 slider_B.pack()
 
-estado_label = tk.Label(
+label_state = tk.Label(
     Window,
     text=f"Current state: {current_state}",
     font=("Arial", 18)
 )
-estado_label.pack(pady=40)
+label_state.pack(pady=40)
 
 
 def UpdateState():
@@ -62,7 +63,7 @@ def UpdateState():
         Window.after(1000, UpdateState)
         return
 
-    # Normalizamos
+    # normalize paths
     pa /= total
     pb /= total
 
@@ -70,11 +71,10 @@ def UpdateState():
     current_state = "A" if r < pa else "B"
 
     print(f"Current state: {current_state}")
-    estado_label.config(text=f"Current state: {current_state}")
+    label_state.config(text=f"Current state: {current_state}")
 
     Window.after(1000, UpdateState)
 
-# ---------------- Arranque ----------------
-UpdateState()
 
+UpdateState()
 Window.mainloop()
