@@ -1,87 +1,89 @@
-import tkinter as tk
-import time
-import random
+import pygame as pg
+from opensimplex import OpenSimplex
+import numpy as np
 
-def create_grid(canvas, rows, cols, cell_size):
-    rects = [[None for _ in range(cols)] for _ in range(rows)]
+ROWS, COLS = 200,200
+CELL_SIZE = 5
+WIDTH, HEIGHT = COLS * CELL_SIZE, ROWS * CELL_SIZE
 
-    for i in range(rows):
-        for j in range(cols):
-            x1 = j * cell_size
-            y1 = i * cell_size
-            x2 = x1 + cell_size
-            y2 = y1 + cell_size
-            rects[i][j] = canvas.create_rectangle(
-                x1, y1, x2, y2,
-                outline="black", fill="black"
-            )
-    return rects
+def noise2d(noise, x, y, octaves=1, persistence=0.5, lacunarity=2.0):
+    total = 0
+    amplitude = 1
+    frequency = 1
 
-def update_grid(canvas, rects, arr):
-    for i in range(rows):
-        for j in range(cols):
-            color = "black" if arr[i][j] else "white"
-            canvas.itemconfig(rects[i][j], fill=color, outline=color)
+    for i in range(octaves):
+        total += noise.noise2(x * frequency, y * frequency) * amplitude
+        amplitude *= persistence
+        frequency *= lacunarity
 
-def Initialize_Arr(arr, density=0.50):
-    for i in range(rows):
-        for j in range(cols):
-            arr[i][j] = 1 if random.random() < density else 0
+    return total
 
-def Cell_Logic(arr):
-    temp = [[0 for _ in range(cols)] for _ in range(rows)]
+def Initialize_Arr(seed):
+    noise = OpenSimplex(seed)
+    grid = np.zeros((ROWS, COLS))
+
+    scale = 0.02
+    for i in range(ROWS):
+        for j in range(COLS):
+            val = noise2d(noise, j * scale, i * scale, octaves=6)
+            grid[i][j] = 1 if val > 0.35 else 0
+
+    return grid
+
+def Cell_Logic(grid):
+    rows, cols = grid.shape
+    temp = np.zeros((rows, cols), dtype=np.uint8)
 
     for j in range(rows):
         for k in range(cols):
             live_neighbors = 0
-
             for dy in (-1, 0, 1):
                 for dx in (-1, 0, 1):
                     if dy == 0 and dx == 0:
                         continue
-
                     y = j + dy
                     x = k + dx
-
                     if 0 <= y < rows and 0 <= x < cols:
-                        live_neighbors += arr[y][x]
+                        live_neighbors += grid[y][x]
 
-            if arr[j][k] == 1:
+            if grid[j][k] == 1:
                 temp[j][k] = 1 if live_neighbors >= 4 else 0
             else:
                 temp[j][k] = 1 if live_neighbors >= 5 else 0
-            
 
     return temp
 
-def game_loop(iterations):
-    if iterations <= 0:
-       return  # stop looping
+def draw(grid):
+    surface = pg.Surface((COLS , ROWS))
 
-    global arr
-    arr = Cell_Logic(arr)
-    update_grid(canvas, rects, arr)
+    pixels = np.zeros((ROWS, COLS, 3), dtype=np.uint8)
+    pixels[grid == 1] = [0, 0, 0]  # Black for alive cells
+    pixels[grid == 0] = [255, 255, 255]        # White for dead cells
 
-    root.after(1000, lambda: game_loop(iterations - 1))
+    pixels = np.transpose(pixels, (1, 0, 2))
+
+    pg.surfarray.blit_array(surface, pixels)
+    surface = pg.transform.scale(surface, (WIDTH, HEIGHT))
+    screen.blit(surface, (0, 0))
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.title("Cellular Automaton")
-    root.geometry("1000x1000")
+    pg.init()
+    screen = pg.display.set_mode((WIDTH, HEIGHT))
+    clock = pg.time.Clock()
+    running = True
 
-    canvas = tk.Canvas(root, width=1000, height=1000, bg="gray")
+    grid = Initialize_Arr(42)
 
-    rows = 200
-    cols = 200
 
-    iterations = 5
+    while running:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
 
-    arr = [[0 for _ in range(cols)] for _ in range(rows)]
-    Initialize_Arr(arr)
-    rects = create_grid(canvas, rows, cols, 5)
+        grid = Cell_Logic(grid)
+        draw(grid)
 
-    canvas.pack()
+        pg.display.flip()
+        clock.tick(60)
 
-    game_loop(iterations)
-
-    root.mainloop()
+    pg.quit()
