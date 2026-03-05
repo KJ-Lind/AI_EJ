@@ -22,11 +22,11 @@ def Initialize_Arr(seed):
     noise = OpenSimplex(seed)
     grid = np.zeros((ROWS, COLS))
 
-    scale = 0.02
+    scale = 0.05
     for i in range(ROWS):
         for j in range(COLS):
             val = noise2d(noise, j * scale, i * scale, octaves=6)
-            grid[i][j] = 1 if val > 0.35 else 0
+            grid[i][j] = 1 if val > 0.05 else 0
 
     return grid
 
